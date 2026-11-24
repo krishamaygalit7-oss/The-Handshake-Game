@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7ff">
+  <title>The Handshake Game</title>
+  <style>
+    :root {
+      --ink: #20264a;
+      --muted: #727a98;
+      --purple: #6c5ce7;
+      --purple-dark: #5545ca;
+      --pink: #ff6b9a;
+      --mint: #38c9ad;
+      --yellow: #ffd166;
+      --paper: #ffffff;
+      --background: #f5f7ff;
+      --line: #e8ebf8;
+      --shadow: 0 18px 48px rgba(48, 57, 110, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(108, 92, 231, .09), transparent 25rem),
+        radial-gradient(circle at 92% 18%, rgba(56, 201, 173, .1), transparent 23rem),
+        var(--background);
+      font-family: Inter, ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      font-size: .9rem;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      color: white;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--purple), #9b79ff);
+      box-shadow: 0 7px 16px rgba(108, 92, 231, .25);
+    }
+
+    .eyebrow {
+      color: var(--purple);
+      font-weight: 850;
+      font-size: .74rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: appear .35s ease both; }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid rgba(226, 230, 246, .9);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Main menu */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.03fr .97fr;
+      align-items: center;
+      gap: 28px;
+      min-height: 520px;
+      padding: clamp(24px, 5vw, 58px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: #f0edff;
+      right: -78px;
+      top: -105px;
+      z-index: 0;
+    }
+
+    .hero-copy, .hero-art { position: relative; z-index: 1; }
+
+    h1 {
+      margin: 12px 0 10px;
+      font-size: clamp(2.4rem, 6vw, 4.7rem);
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+
+    .hero-copy h1 span { color: var(--purple); }
+
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--pink);
+      font-weight: 900;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      letter-spacing: .12em;
+    }
+
+    .intro {
+      max-width: 470px;
+      color: var(--muted);
+      font-size: 1.04rem;
+      line-height: 1.7;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 11px;
+      margin-top: 26px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 11px 17px;
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 850;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      touch-action: manipulation;
+    }
+
+    .button:hover { transform: translateY(-2px); }
+    .button:active { transform: translateY(0) scale(.98); }
+    .button:focus-visible { outline: 3px solid #a99eff; outline-offset: 3px; }
+
+    .button-primary {
+      color: white;
+      background: linear-gradient(135deg, var(--purple), #8975f5);
+      box-shadow: 0 9px 18px rgba(108, 92, 231, .24);
+    }
+
+    .button-primary:hover { background: linear-gradient(135deg, var(--purple-dark), #7966e8); }
+    .button-soft { color: var(--ink); background: #f0efff; }
+    .button-mint { color: #15574e; background: #dcfaf3; }
+    .button-pink { color: #8d3152; background: #fff0f5; }
+    .button-plain { color: var(--muted); background: #f4f5fa; }
+    .button:disabled { cursor: not-allowed; opacity: .48; transform: none; }
+
+    .hero-art {
+      display: grid;
+      place-items: center;
+      min-height: 330px;
+      border-radius: 28px;
+      background: linear-gradient(145deg, #f8f6ff, #effcf9);
+    }
+
+    .hero-art svg { width: min(100%, 430px); height: auto; }
+    .art-line { stroke: #b6aaff; stroke-width: 4; stroke-linecap: round; }
+    .art-person { filter: drop-shadow(0 5px 5px rgba(41, 47, 90, .12)); }
+
+    /* Gameplay */
+    .game-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 7px 2px 18px;
+    }
+
+    .game-heading h2 {
+      margin: 5px 0 0;
+      font-size: clamp(1.65rem, 4vw, 2.45rem);
+      letter-spacing: -.04em;
+    }
+
+    .score-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--purple);
+      font-weight: 850;
+      box-shadow: 0 5px 16px rgba(48, 57, 110, .08);
+      white-space: nowrap;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      padding: 17px 20px;
+      border-radius: 20px;
+      background: white;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(48, 57, 110, .06);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .11em;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 3px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.06em;
+    }
+
+    .stat-handshakes {
+      color: var(--purple);
+      background: linear-gradient(135deg, #fff, #f3f0ff);
+    }
+
+    .stage-card { padding: 12px; }
+
+    .stage-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px 12px;
+      color: var(--muted);
+      font-size: .87rem;
+      font-weight: 700;
+    }
+
+    .stage {
+      width: 100%;
+      aspect-ratio: 800 / 470;
+      min-height: 250px;
+      overflow: hidden;
+      border-radius: 19px;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255,255,255,.92), rgba(247,248,255,.94)),
+        #f7f8ff;
+      border: 1px solid #eff0fa;
+    }
+
+    #peopleSvg { width: 100%; height: 100%; display: block; }
+
+    .handshake-line {
+      stroke: #9c91ed;
+      stroke-width: 2.6;
+      opacity: .62;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .handshake-line.new-line {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: draw-line .55s ease forwards;
+    }
+
+    @keyframes draw-line { to { stroke-dashoffset: 0; } }
+
+    .person-group { filter: drop-shadow(0 4px 3px rgba(40, 47, 90, .12)); }
+    .person-group.new-person { animation: pop-in .35s cubic-bezier(.2, 1.4, .45, 1) both; }
+    @keyframes pop-in {
+      from { opacity: 0; transform: scale(.35); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .controls .button-primary { min-height: 54px; padding-inline: 23px; }
+    .control-spacer { flex: 1; }
+
+    .hint {
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+      margin: 8px 3px 0;
+    }
+
+    .pattern-card {
+      margin-top: 16px;
+      padding: clamp(18px, 3vw, 26px);
+      border: 1px solid #e8e4ff;
+      background: linear-gradient(135deg, #fff, #f8f6ff);
+    }
+
+    .pattern-card[hidden] { display: none; }
+
+    .pattern-card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -.02em;
+    }
+
+    .pattern-subtitle { margin: 7px 0 16px; color: var(--muted); }
+
+    .sequence {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .sequence-item {
+      display: grid;
+      place-items: center;
+      min-width: 43px;
+      min-height: 43px;
+      padding: 0 10px;
+      border-radius: 13px;
+      color: #554a8e;
+      background: #eeebff;
+      font-weight: 900;
+    }
+
+    .sequence-item.latest {
+      color: white;
+      background: var(--purple);
+      box-shadow: 0 6px 14px rgba(108, 92, 231, .25);
+      transform: translateY(-2px);
+    }
+
+    .pattern-note {
+      display: inline-block;
+      padding: 10px 13px;
+      border-radius: 12px;
+      background: #e4faf4;
+      color: #176554;
+      font-weight: 800;
+      font-size: .92rem;
+    }
+
+    /* Dialogs */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(31, 35, 67, .48);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.open { display: grid; animation: fade-in .2s ease both; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-card {
+      width: min(570px, 100%);
+      max-height: min(88vh, 760px);
+      overflow-y: auto;
+      padding: clamp(22px, 5vw, 34px);
+      border-radius: 25px;
+      background: white;
+      box-shadow: 0 24px 70px rgba(25, 30, 65, .25);
+      animation: modal-up .24s ease both;
+    }
+
+    @keyframes modal-up {
+      from { transform: translateY(12px) scale(.98); }
+      to { transform: translateY(0) scale(1); }
+    }
+
+    .modal-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .modal-heading h2 {
+      margin: 4px 0 12px;
+      font-size: clamp(1.45rem, 4vw, 2rem);
+      letter-spacing: -.04em;
+    }
+
+    .close-button {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 12px;
+      color: var(--muted);
+      background: #f2f3f9;
+      font-size: 1.25rem;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .modal-body { color: #555d7d; line-height: 1.65; }
+    .formula {
+      margin: 17px 0;
+      padding: 16px;
+      border-radius: 16px;
+      color: var(--purple-dark);
+      background: #f2efff;
+      text-align: center;
+      font-size: clamp(1.35rem, 4vw, 1.8rem);
+      font-weight: 950;
+      letter-spacing: .04em;
+    }
+
+    .example-steps {
+      padding: 15px 17px;
+      border-radius: 16px;
+      background: #f7f8fc;
+      color: var(--ink);
+      font-weight: 750;
+      line-height: 1.8;
+    }
+
+    .challenge-question {
+      margin: 8px 0 16px;
+      color: var(--ink);
+      font-size: 1.17rem;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .answer-option {
+      min-height: 50px;
+      border: 2px solid #e7e8f2;
+      border-radius: 14px;
+      color: var(--ink);
+      background: white;
+      font-weight: 850;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .answer-option:hover:not(:disabled) {
+      border-color: #b4aaff;
+      background: #f8f6ff;
+    }
+
+    .answer-option:disabled { cursor: default; }
+    .answer-option.correct { border-color: #49c9a9; background: #e6fbf5; color: #176554; }
+    .answer-option.incorrect { border-color: #ff90ad; background: #fff0f4; color: #9a3454; }
+
+    .feedback {
+      display: none;
+      margin-top: 15px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      line-height: 1.55;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.good { color: #176554; background: #e6fbf5; }
+    .feedback.try { color: #80415a; background: #fff0f4; }
+
+    .challenge-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .tiny-note { color: var(--muted); font-size: .84rem; }
+
+    @media (max-width: 760px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-art { min-height: 260px; }
+      .hero-art svg { max-height: 280px; }
+    }
+
+    @media (max-width: 520px) {
+      .app { width: min(100% - 20px, 1120px); padding-top: 12px; }
+      .hero { padding: 25px 20px; gap: 20px; border-radius: 20px; }
+      .hero-art { min-height: 220px; }
+      .game-heading { align-items: flex-start; }
+      .score-pill { padding: 8px 11px; font-size: .86rem; }
+      .dashboard { gap: 9px; }
+      .stat { padding: 14px 13px; border-radius: 16px; }
+      .stat-label { font-size: .66rem; }
+      .stage-card { padding: 8px; }
+      .stage { min-height: 220px; }
+      .controls { gap: 8px; }
+      .controls .button { flex: 1 1 calc(50% - 8px); padding-inline: 10px; font-size: .88rem; }
+      .controls .button-primary { flex: 1 1 100%; }
+      .control-spacer { display: none; }
+      .answer-grid { gap: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">↗</span>
+        <span>NUMBER NEXUS</span>
+      </div>
+      <span class="eyebrow">A game of connections</span>
+    </header>
+
+    <section id="menuScreen" class="screen active" aria-label="Main menu">
+      <div class="hero card">
+        <div class="hero-copy">
+          <div class="eyebrow">A hands-on math adventure</div>
+          <h1>THE<br><span>HANDSHAKE</span><br>GAME</h1>
+          <p class="subtitle">CONNECT, COUNT, DISCOVER!</p>
+          <p class="intro">
+            Bring people together, watch every handshake appear, and uncover
+            the surprising number pattern hiding in the connections.
+          </p>
+          <div class="menu-buttons">
+            <button class="button button-primary" id="playButton">▶ &nbsp; PLAY GAME</button>
+            <button class="button button-soft" id="howButton">HOW TO PLAY</button>
+            <button class="button button-mint" id="secretMenuButton">MATHEMATICAL SECRET</button>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-label="Illustration of connected people">
+          <svg viewBox="0 0 430 330" role="img" aria-label="Four colorful people connected by handshake lines">
+            <line class="art-line" x1="106" y1="107" x2="310" y2="95"/>
+            <line class="art-line" x1="106" y1="107" x2="118" y2="248"/>
+            <line class="art-line" x1="106" y1="107" x2="311" y2="245"/>
+            <line class="art-line" x1="310" y1="95" x2="118" y2="248"/>
+            <line class="art-line" x1="310" y1="95" x2="311" y2="245"/>
+            <line class="art-line" x1="118" y1="248" x2="311" y2="245"/>
+            <g class="art-person" transform="translate(106 107)">
+              <circle r="30" fill="#ffcfaa"/><path d="M-28-8 Q-24-38 2-34 Q25-32 29-8 L17-13 L8-25 L-9-17 L-20-4Z" fill="#5b426c"/>
+              <circle cx="-10" cy="3" r="2" fill="#30334e"/><circle cx="10" cy="3" r="2" fill="#30334e"/>
+              <path d="M-7 14 Q0 20 8 13" fill="none" stroke="#a94e65" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M-25 43 Q0 27 25 43 L32 97 L-32 97Z" fill="#ff7599"/>
+            </g>
+            <g class="art-person" transform="translate(310 95)">
+              <circle r="30" fill="#b97954"/><path d="M-30-10 Q-20-41 8-34 Q31-29 30-4 L17-14 L-2-19 L-20-8Z" fill="#24334d"/>
+              <circle cx="-10" cy="3" r="2" fill="#30334e"/><circle cx="10" cy="3" r="2" fill="#30334e"/>
+              <path d="M-7 14 Q0 20 8 13" fill="none" stroke="#612d3f" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M-25 43 Q0 27 25 43 L32 97 L-32 97Z" fill="#54cbb3"/>
+            </g>
+            <g class="art-person" transform="translate(118 248)">
+              <circle r="30" fill="#f3bd8f"/><path d="M-31-8 Q-29-38-3-35 Q27-34 31-6 L23 1 L17-22 L-11-18 L-22-3Z" fill="#e1a62d"/>
+              <circle cx="-10" cy="3" r="2" fill="#30334e"/><circle cx="10" cy="3" r="2" fill="#30334e"/>
+              <path d="M-7 14 Q0 20 8 13" fill="none" stroke="#a94e65" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M-25 43 Q0 27 25 43 L32 82 L-32 82Z" fill="#8876ee"/>
+            </g>
+            <g class="art-person" transform="translate(311 245)">
+              <circle r="30" fill="#f2d1bd"/><path d="M-31-10 Q-27-39 0-35 Q26-34 31-9 L23 5 L20-18 Q4-28-14-17 L-24-2Z" fill="#b75660"/>
+              <circle cx="-10" cy="3" r="2" fill="#30334e"/><circle cx="10" cy="3" r="2" fill="#30334e"/>
+              <path d="M-7 14 Q0 20 8 13" fill="none" stroke="#a94e65" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M-25 43 Q0 27 25 43 L32 82 L-32 82Z" fill="#f0bd4b"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen" aria-label="Handshake game">
+      <div class="game-heading">
+        <div>
+          <div class="eyebrow">Every pair, one handshake</div>
+          <h2>Let's connect!</h2>
+        </div>
+        <div class="score-pill" aria-live="polite">Challenge score: <span id="scoreValue">0</span></div>
+      </div>
+
+      <div class="dashboard">
+        <div class="stat">
+          <span class="stat-label">TOTAL PEOPLE</span>
+          <strong class="stat-value" id="peopleCount">1</strong>
+        </div>
+        <div class="stat stat-handshakes">
+          <span class="stat-label">TOTAL HANDSHAKES</span>
+          <strong class="stat-value" id="handshakeCount" aria-live="polite">0</strong>
+        </div>
+      </div>
+
+      <div class="stage-card card">
+        <div class="stage-topline">
+          <span>🌟 The gathering</span>
+          <span id="stageHint">Add someone to make a connection!</span>
+        </div>
+        <div class="stage">
+          <svg id="peopleSvg" viewBox="0 0 800 470" role="img" aria-label="People and their handshake connections"></svg>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="Game controls">
+        <button id="addButton" class="button button-primary">＋ ADD PERSON</button>
+        <button id="removeButton" class="button button-pink">− REMOVE PERSON</button>
+        <button id="resetButton" class="button button-plain">↻ RESET</button>
+        <span class="control-spacer"></span>
+        <button id="patternButton" class="button button-soft" aria-expanded="false">SHOW PATTERN</button>
+        <button id="secretButton" class="button button-mint">MATHEMATICAL SECRET</button>
+        <button id="challengeButton" class="button button-soft">★ CHALLENGE MODE</button>
+        <button id="menuButton" class="button button-plain">MAIN MENU</button>
+      </div>
+
+      <p class="hint">A new person shakes hands once with everyone already here. You can have up to 15 people.</p>
+
+      <section id="patternCard" class="pattern-card card" hidden>
+        <h3>DISCOVER THE PATTERN!</h3>
+        <p class="pattern-subtitle">The total grows by one more handshake each time a person joins.</p>
+        <div id="sequence" class="sequence" aria-live="polite"></div>
+        <div id="patternNote" class="pattern-note"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="howModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <div>
+          <div class="eyebrow">Quick guide</div>
+          <h2 id="howTitle">How to play</h2>
+        </div>
+        <button class="close-button" data-close="howModal" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Add Person</strong> brings someone new into the gathering. They shake hands with each person already there.</p>
+        <p><strong>Remove Person</strong> takes away the most recently added person and their connections. Reset starts the gathering over.</p>
+        <p>Watch the handshake counter and open <strong>Discover the Pattern</strong> to see how the totals grow. Try Challenge Mode to test what you have learned!</p>
+      </div>
+      <button class="button button-primary" data-close="howModal">GOT IT!</button>
+    </div>
+  </div>
+
+  <div id="secretModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="secretTitle">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <div>
+          <div class="eyebrow">The mathematical secret</div>
+          <h2 id="secretTitle">THE SECRET BEHIND HANDSHAKES</h2>
+        </div>
+        <button class="close-button" data-close="secretModal" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p>When everyone shakes hands with every other person exactly once, the totals follow the <strong>triangular numbers</strong>.</p>
+        <div class="formula">H = n(n − 1) / 2</div>
+        <p><strong>H</strong> is the total number of handshakes and <strong>n</strong> is the number of people. We count pairs of people: each pair makes one handshake, and the division by 2 avoids counting the same pair twice.</p>
+        <div class="example-steps">
+          Example with 5 people:<br>
+          H = 5(5 − 1) / 2<br>
+          H = 5 × 4 / 2<br>
+          H = 20 / 2 = <strong>10 handshakes</strong>
+        </div>
+        <p>Each new person makes one handshake with every person already present. So the next person adds one more handshake than the person before them: 0, 1, 2, 3, 4…</p>
+      </div>
+      <button class="button button-primary" data-close="secretModal">UNDERSTOOD!</button>
+    </div>
+  </div>
+
+  <div id="challengeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="challengeTitle">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <div>
+          <div class="eyebrow">Think it through</div>
+          <h2 id="challengeTitle">Handshake challenge</h2>
+        </div>
+        <button class="close-button" data-close="challengeModal" aria-label="Close">×</button>
+      </div>
+      <div id="challengeContent"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const MAX_PEOPLE = 15;
+      const SVG_NS = "http://www.w3.org/2000/svg";
+      const palette = [
+        { skin: "#f6c7a6", hair: "#59435f", shirt: "#ff7599", style: 0 },
+        { skin: "#b97954", hair: "#24334d", shirt: "#54cbb3", style: 1 },
+        { skin: "#f2d1bd", hair: "#b75660", shirt: "#f0bd4b", style: 2 },
+        { skin: "#d99b72", hair: "#4b3b32", shirt: "#8876ee", style: 3 },
+        { skin: "#f1c6a5", hair: "#d29a31", shirt: "#59a7ed", style: 1 },
+        { skin: "#a96e50", hair: "#302d3b", shirt: "#f0845b", style: 2 },
+        { skin: "#efc1a0", hair: "#704b8d", shirt: "#42b8a5", style: 3 },
+        { skin: "#d39470", hair: "#2b4252", shirt: "#e879a8", style: 0 },
+        { skin: "#f4d0b6", hair: "#bf7546", shirt: "#7188e8", style: 1 },
+        { skin: "#9e684e", hair: "#272c3e", shirt: "#d9a64a", style: 2 },
+        { skin: "#edbd98", hair: "#513d37", shirt: "#66b7d0", style: 3 },
+        { skin: "#c58664", hair: "#a34f58", shirt: "#9b78e8", style: 0 },
+        { skin: "#f0cbb0", hair: "#5b4051", shirt: "#59c59b", style: 2 },
+        { skin: "#ae745a", hair: "#e0aa41", shirt: "#ef7990", style: 1 },
+        { skin: "#ecc2a3", hair: "#304351", shirt: "#56a1e2", style: 3 }
+      ];
+
+      let people = [];
+      let nextId = 1;
+      let challengeScore = 0;
+      let activeQuestion = null;
+      let answered = false;
+
+      const $ = (id) => document.getElementById(id);
+      const menuScreen = $("menuScreen");
+      const gameScreen = $("gameScreen");
+      const peopleCount = $("peopleCount");
+      const handshakeCount = $("handshakeCount");
+      const peopleSvg = $("peopleSvg");
+      const patternCard = $("patternCard");
+
+      // This is the single source of truth for the handshake total.
+      const totalHandshakes = (n) => (n * (n - 1)) / 2;
+
+      function showScreen(screen) {
+        menuScreen.classList.toggle("active", screen === "menu");
+        gameScreen.classList.toggle("active", screen === "game");
+      }
+
+      function makeSvgElement(tag, attributes = {}) {
+        const element = document.createElementNS(SVG_NS, tag);
+        for (const [key, value] of Object.entries(attributes)) {
+          element.setAttribute(key, value);
+        }
+        return element;
+      }
+
+      // Arrange up to 15 people in a centered 5-column grid.
+      function getPersonPosition(index) {
+        const columns = 5;
+        const rows = 3;
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const xGap = 146;
+        const yGap = 139;
+        const startX = (800 - (columns - 1) * xGap) / 2;
+        const startY = (470 - (rows - 1) * yGap) / 2 + 5;
+        return { x: startX + col * xGap, y: startY + row * yGap };
+      }
+
+      function drawPerson(person, index, isNew) {
+        const { x, y } = getPersonPosition(index);
+        const look = palette[(person.id - 1) % palette.length];
+        const group = makeSvgElement("g", {
+          class: `person-group${isNew ? " new-person" : ""}`,
+          transform: `translate(${x} ${y})`,
+          role: "img",
+          "aria-label": `Person ${index + 1}`
+        });
+
+        // Body, head, hair, and face make each character easy to distinguish.
+        group.appendChild(makeSvgElement("path", {
+          d: "M-32 26 Q0 8 32 26 L38 64 Q0 77 -38 64Z",
+          fill: look.shirt,
+          stroke: "#ffffff",
+          "stroke-width": "3"
+        }));
+        group.appendChild(makeSvgElement("rect", {
+          x: "-7", y: "13", width: "14", height: "18", rx: "6", fill: look.skin
+        }));
+        group.appendChild(makeSvgElement("circle", {
+          cx: "0", cy: "-6", r: "25", fill: look.skin, stroke: "#fff", "stroke-width": "3"
+        }));
+
+        let hairPath;
+        switch (look.style) {
+          case 0:
+            hairPath = "M-25-10 Q-25-38 0-35 Q27-34 26-8 L15-15 L5-24 L-12-17 L-21-4Z";
+            break;
+          case 1:
+            hairPath = "M-26-12 Q-23-37 1-35 Q24-32 27-9 L18-2 L16-20 Q0-27-15-17 L-22-3Z";
+            break;
+          case 2:
+            hairPath = "M-27-10 Q-28-38 0-36 Q28-34 27-8 L20 1 L17-18 L-15-18 L-21-1Z";
+            break;
+          default:
+            hairPath = "M-26-11 Q-22-39 3-35 Q28-31 25-8 Q14-20 1-22 Q-13-19-26-11Z";
+        }
+        group.appendChild(makeSvgElement("path", { d: hairPath, fill: look.hair }));
+        group.appendChild(makeSvgElement("circle", { cx: "-9", cy: "-4", r: "2", fill: "#30334e" }));
+        group.appendChild(makeSvgElement("circle", { cx: "9", cy: "-4", r: "2", fill: "#30334e" }));
+        group.appendChild(makeSvgElement("path", {
+          d: "M-6 7 Q0 12 7 6",
+          fill: "none", stroke: "#9b4c5d", "stroke-width": "2", "stroke-linecap": "round"
+        }));
+        group.appendChild(makeSvgElement("text", {
+          x: "0", y: "91", "text-anchor": "middle",
+          "font-size": "13", "font-weight": "800", fill: "#6d7390"
+        }));
+        group.lastChild.textContent = `Person ${index + 1}`;
+        peopleSvg.appendChild(group);
+      }
+
+      function drawConnections(newPersonId = null) {
+        const lineLayer = makeSvgElement("g", { "aria-hidden": "true" });
+
+        // Draw one line for each unordered pair (i, j), with i < j.
+        for (let i = 0; i < people.length; i++) {
+          for (let j = i + 1; j < people.length; j++) {
+            const a = getPersonPosition(i);
+            const b = getPersonPosition(j);
+            const isNewLine = newPersonId !== null &&
+              (people[i].id === newPersonId || people[j].id === newPersonId);
+            const line = makeSvgElement("line", {
+              x1: a.x, y1: a.y + 2,
+              x2: b.x, y2: b.y + 2,
+              class: `handshake-line${isNewLine ? " new-line" : ""}`,
+              pathLength: "1"
+            });
+            lineLayer.appendChild(line);
+          }
+        }
+        peopleSvg.appendChild(lineLayer);
+      }
+
+      function render(newPersonId = null) {
+        peopleSvg.replaceChildren();
+        drawConnections(newPersonId);
+        people.forEach((person, index) => {
+          drawPerson(person, index, person.id === newPersonId);
+        });
+
+        const count = people.length;
+        const handshakes = totalHandshakes(count);
+        peopleCount.textContent = count;
+        handshakeCount.textContent = handshakes;
+        $("addButton").disabled = count >= MAX_PEOPLE;
+        $("removeButton").disabled = count <= 1;
+        $("stageHint").textContent = count >= MAX_PEOPLE
+          ? "Gathering is full — reset to play again!"
+          : count === 1
+            ? "Add someone to make a connection!"
+            : `Every pair connects once — ${handshakes} total so far.`;
+
+        renderPattern();
+      }
+
+      function renderPattern() {
+        const sequence = $("sequence");
+        sequence.replaceChildren();
+
+        // Triangular totals for gatherings from 1 up to the current count.
+        for (let n = 1; n <= people.length; n++) {
+          const item = document.createElement("span");
+          item.className = "sequence-item" + (n === people.length ? " latest" : "");
+          item.textContent = totalHandshakes(n);
+          item.title = `${n} ${n === 1 ? "person" : "people"}: ${totalHandshakes(n)} handshakes`;
+          sequence.appendChild(item);
+        }
+
+        const n = people.length;
+        $("patternNote").textContent = n > 1
+          ? `At ${n} people, the total is ${totalHandshakes(n)}. The newest person added ${n - 1} handshake${n - 1 === 1 ? "" : "s"}.`
+          : "With 1 person, there are 0 pairs — and 0 handshakes.";
+      }
+
+      function addPerson() {
+        if (people.length >= MAX_PEOPLE) return;
+        const person = { id: nextId++ };
+        people.push(person);
+        render(person.id);
+      }
+
+      function removePerson() {
+        if (people.length <= 1) return;
+        people.pop();
+        render();
+      }
+
+      function resetGame() {
+        people = [{ id: nextId++ }];
+        render();
+      }
+
+      function openModal(id) {
+        $(id).classList.add("open");
+      }
+
+      function closeModal(id) {
+        $(id).classList.remove("open");
+      }
+
+      function randomize(items) {
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        return items;
+      }
+
+      function createQuestion() {
+        const type = Math.floor(Math.random() * 3);
+        let prompt, answer, explanation, correctDescription;
+
+        if (type === 0) {
+          const n = 2 + Math.floor(Math.random() * 11);
+          answer = totalHandshakes(n);
+          prompt = `How many handshakes will ${n} people make?`;
+          explanation = `${n}(${n} − 1) / 2 = ${n} × ${n - 1} / 2 = ${answer} handshakes.`;
+          correctDescription = `${n} people`;
+        } else if (type === 1) {
+          const n = 2 + Math.floor(Math.random() * 14);
+          answer = n - 1;
+          prompt = `How many new handshakes are added when person ${n} joins?`;
+          explanation = `The ${n}th person shakes hands with the ${n - 1} people already there, so ${n} − 1 = ${answer} new handshakes.`;
+          correctDescription = `person ${n} joins`;
+        } else {
+          const n = 5;
+          answer = n;
+          prompt = "How many people are needed to make exactly 10 handshakes?";
+          explanation = `Try n(n − 1) / 2 = 10. For 5 people: 5 × 4 / 2 = 10 handshakes.`;
+          correctDescription = "exactly 10 handshakes";
+        }
+
+        const choices = new Set([answer]);
+        let attempts = 0;
+        while (choices.size < 4 && attempts < 100) {
+          attempts++;
+          let distractor;
+          if (type === 2) {
+            distractor = 2 + Math.floor(Math.random() * 10);
+          } else {
+            const spread = Math.max(5, Math.ceil(answer * .45));
+            distractor = Math.max(0, answer + Math.floor(Math.random() * (spread * 2 + 1)) - spread);
+          }
+          choices.add(distractor);
+        }
+        // Fallback guarantees four different options in all cases.
+        let fallback = 0;
+        while (choices.size < 4) choices.add(answer + (++fallback) + 2);
+
+        return { type, prompt, answer, explanation, correctDescription, choices: randomize([...choices]) };
+      }
+
+      function showChallenge() {
+        answered = false;
+        activeQuestion = createQuestion();
+        renderChallenge();
+        openModal("challengeModal");
+      }
+
+      function renderChallenge(selected = null) {
+        const content = $("challengeContent");
+        const q = activeQuestion;
+        content.replaceChildren();
+
+        const prompt = document.createElement("p");
+        prompt.className = "challenge-question";
+        prompt.textContent = q.prompt;
+        content.appendChild(prompt);
+
+        const grid = document.createElement("div");
+        grid.className = "answer-grid";
+
+        q.choices.forEach((choice) => {
+          const button = document.createElement("button");
+          button.className = "answer-option";
+          button.textContent = choice;
+          button.disabled = answered;
+
+          if (answered && choice === q.answer) button.classList.add("correct");
+          if (answered && choice === selected && choice !== q.answer) button.classList.add("incorrect");
+
+          button.addEventListener("click", () => submitAnswer(choice));
+          grid.appendChild(button);
+        });
+        content.appendChild(grid);
+
+        if (answered) {
+          const correct = selected === q.answer;
+          const feedback = document.createElement("div");
+          feedback.className = `feedback show ${correct ? "good" : "try"}`;
+          feedback.innerHTML = `<strong>${correct ? "Correct! 🎉" : "Not quite."}</strong> ${q.explanation}`;
+          content.appendChild(feedback);
+
+          const footer = document.createElement("div");
+          footer.className = "challenge-footer";
+          const score = document.createElement("span");
+          score.className = "tiny-note";
+          score.textContent = `Score: ${challengeScore}`;
+          const next = document.createElement("button");
+          next.className = "button button-primary";
+          next.textContent = "NEXT QUESTION";
+          next.addEventListener("click", () => {
+            activeQuestion = createQuestion();
+            answered = false;
+            renderChallenge();
+          });
+          footer.append(score, next);
+          content.appendChild(footer);
+        } else {
+          const note = document.createElement("p");
+          note.className = "tiny-note";
+          note.textContent = "Choose an answer. Correct answers earn 1 point.";
+          content.appendChild(note);
+        }
+      }
+
+      function submitAnswer(choice) {
+        if (answered) return;
+        answered = true;
+        if (choice === activeQuestion.answer) {
+          challengeScore++;
+          $("scoreValue").textContent = challengeScore;
+        }
+        renderChallenge(choice);
+      }
+
+      $("playButton").addEventListener("click", () => {
+        showScreen("game");
+        resetGame();
+      });
+      $("howButton").addEventListener("click", () => openModal("howModal"));
+      $("secretMenuButton").addEventListener("click", () => openModal("secretModal"));
+      $("addButton").addEventListener("click", addPerson);
+      $("removeButton").addEventListener("click", removePerson);
+      $("resetButton").addEventListener("click", resetGame);
+      $("secretButton").addEventListener("click", () => openModal("secretModal"));
+      $("challengeButton").addEventListener("click", showChallenge);
+      $("menuButton").addEventListener("click", () => showScreen("menu"));
+
+      $("patternButton").addEventListener("click", () => {
+        const opening = patternCard.hidden;
+        patternCard.hidden = !opening;
+        $("patternButton").textContent = opening ? "HIDE PATTERN" : "SHOW PATTERN";
+        $("patternButton").setAttribute("aria-expanded", String(opening));
+        if (opening) patternCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+
+      document.querySelectorAll("[data-close]").forEach((button) => {
+        button.addEventListener("click", () => closeModal(button.dataset.close));
+      });
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) modal.classList.remove("open");
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          document.querySelectorAll(".modal.open").forEach((modal) => modal.classList.remove("open"));
+        }
+      });
+
+      // Begin at one person: there are no pairs yet, so the total is zero.
+      people = [{ id: nextId++ }];
+      render();
+    })();
+  </script>
+</body>
+</html>
